@@ -194,9 +194,9 @@
         <button v-for="(d,i) in days" :key="i" @click="selectedDay=i"
           :class="['flex-shrink-0 flex flex-col items-center px-4 py-2.5 rounded-2xl transition-all border',
             selectedDay===i ? 'bg-orange text-white border-orange shadow-md scale-105' : 'bg-white text-brown border-orange-100']">
-          <span class="text-[10px] font-bold opacity-70">{{d.dateStr.replace(/[日一二三四五六]/,'')}}</span>
-          <span class="text-base font-bold leading-snug">{{d.dateStr.match(/[日一二三四]/)?.[0]}}</span>
-          <span class="text-[10px]">{{d.dateStr.split('/')[0]}}/{{d.dateStr.replace(/[日一二三四]/,'').split('/')[1]}}</span>
+		<span class="text-[10px] font-bold opacity-70">Day {{i+1}}</span>
+                <span class="text-base font-bold leading-snug">{{d.dateStr.match(/[日一二三四]/)?.[0]}}</span>
+                <span class="text-[10px]">{{d.dateStr.replace(/[日一二三四]/,'')}}</span>
         </button>
       </div>
 
@@ -661,7 +661,7 @@ createApp({
           dateStr:'5/13三',emoji:'🚡',title:'港都風情與美食饗宴',city:'Busan',wc:'busan',wi:3,
           hotel:{name:'LAVALSE HOTEL',addr:'82 Bongnaenaru-ro, Yeongdo-gu, Busan, 南韓',phone:'+82 51-790-1500'},
           locations:[
-            {id:'d3l1',type:'attraction',emoji:'🚡',name:'松島海上纜車',nameKo:'송도해상케이블카',subtitle:'水晶車廂往返',lat:35.0757,lng:129.0131,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=송도해상케이블카',naverMapsUrl:'https://map.naver.com/v5/search/송도해상케이블카',guideUrl:'https://youtu.be/FrKx5q9KhgY',story:'全長1.62km的海上纜車！水晶車廂腳底就是大海。📌水晶車廂來回約15,000韓元，建議提早訂票！',notes:''},
+            {id:'d3l1',type:'attraction',emoji:'🚡',name:'松島海上纜車',nameKo:'송도해상케이블카',subtitle:'水晶車廂往返',lat:35.0757,lng:129.0131,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=송도해상케이블카',naverMapsUrl:'https://map.naver.com/v5/search/송도해상케이블카',guideUrl:'https://youtu.be/PNnU7J_3C2k?si=4FkpUii1eilxkQLV',story:'全長1.62km的海上纜車！水晶車廂腳底就是大海。📌水晶車廂來回約15,000韓元，建議提早訂票！',notes:''},
             {id:'d3l2',type:'attraction',emoji:'🌊',name:'影島海女村',nameKo:'영도해녀마을',subtitle:'影島',lat:35.0677,lng:129.0604,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=영도해녀마을',naverMapsUrl:'https://map.naver.com/v5/search/영도해녀마을',guideUrl:'https://tessatravel.tw/yeongdo-haenyeo-village/',story:'保存傳統海女文化的漁村！📌現場可購買新鮮海膽、活鮑魚，價格公道！',notes:''},
             {id:'d3l3',type:'attraction',emoji:'☕',name:'P.ARK玻璃屋海景咖啡廳',nameKo:'피아크',subtitle:'飲品自理',lat:35.0680,lng:129.0580,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=피아크+영도',naverMapsUrl:'https://map.naver.com/v5/search/피아크영도',guideUrl:'https://www.jsimplelife.com/busan-trip-4/',story:'全玻璃建築面向大海，坐在裡面像漂浮在海上。📌飲品自費約15,000韓元，需預約，下午陽光最美！',notes:''},
             {id:'d3l4',type:'attraction',emoji:'🏠',name:'白淺灘文化村',nameKo:'흰여울문화마을',subtitle:'電影辯護人拍攝地',lat:35.0704,lng:129.0572,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=흰여울문화마을',naverMapsUrl:'https://map.naver.com/v5/search/흰여울문화마을',guideUrl:'https://tsnio.com/huinnyeoul-culture-village/',story:'韓國電影《辯護人》拍攝地！懸崖邊的小漁村，藍白色調彷彿希臘聖托里尼。可俯視釜山港。',notes:''},
