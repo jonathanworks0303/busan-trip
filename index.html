@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>釜山鑲金團 🏆</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          cream: '#FFF8EE', orange: '#F4845F', gold: '#F2C14E',
+          sage: '#88C9A1', brown: '#6B4C3B', 'brown-lt': '#9C7560'
+        },
+        fontFamily: { sans: ['Noto Sans TC','sans-serif'], serif: ['Noto Serif TC','serif'] }
+      }}
+    }
+  </script>
+  <style>
+    body { background:#FFF8EE; font-family:'Noto Sans TC',sans-serif; }
+    .no-scrollbar { scrollbar-width:none; -ms-overflow-style:none; }
+    .no-scrollbar::-webkit-scrollbar { display:none; }
+    .ticket-perf { display:flex; align-items:center; overflow:hidden; }
+    .ticket-hole { width:20px;height:20px;background:#FFF8EE;border-radius:50%;flex-shrink:0;margin:0 -10px;z-index:1; }
+    .ticket-dash { flex:1;border-top:2px dashed rgba(255,255,255,0.3); }
+    .map-wrap { border-radius:16px; overflow:hidden; }
+    .sticky-note { background:#FFF9C4;border-left:4px solid #F2C14E;transform:rotate(-0.4deg);box-shadow:2px 3px 10px rgba(107,76,59,.15); }
+    .badge { font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px; }
+    .badge-attraction { background:#FFF0E8;color:#F4845F;border:1px solid #FFCAB3; }
+    .badge-lunch      { background:#E8F8EF;color:#3D9970;border:1px solid #B3EAC9; }
+    .badge-dinner     { background:#EEF2FF;color:#4C6EF5;border:1px solid #C5D0FA; }
+    .badge-snack      { background:#F8EEF8;color:#9B59B6;border:1px solid #E4C5EA; }
+    .chk-box { width:22px;height:22px;border-radius:50%;border:2px solid #E8D5C4;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s; }
+    .chk-box.done { background:#88C9A1;border-color:#88C9A1; }
+    .input-f { width:100%;padding:10px 14px;border:1.5px solid #FFD5C4;border-radius:12px;background:white;color:#6B4C3B;font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none; }
+    .input-f:focus { border-color:#F4845F; }
+  </style>
+</head>
+<body class="min-h-screen">
+<div id="app" class="max-w-[480px] mx-auto">
+
+  <!-- ── STICKY HEADER ── -->
+  <header class="sticky top-0 z-50">
+    <div class="bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-50 px-4 py-2.5 flex items-center justify-between border-b border-orange-100">
+      <div>
+        <div class="font-serif font-bold text-brown text-lg leading-tight">釜山鑲金團 🏆</div>
+        <div class="text-[11px] text-brown-lt">✈️ 5/10–14 · 釜山 · 慶州</div>
+      </div>
+      <span class="text-2xl">🇰🇷</span>
+    </div>
+    <div class="flex overflow-x-auto no-scrollbar bg-white border-b border-orange-100 px-2 py-2 gap-1.5">
+      <button v-for="t in tabs" :key="t.id" @click="activeTab=t.id"
+        :class="['flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all',
+          activeTab===t.id ? 'bg-orange text-white shadow-md' : 'bg-orange-50 text-brown-lt']">
+        {{t.label}}
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 航班                       -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='flight'" class="px-4 pt-5 pb-10 space-y-5">
+
+    <!-- Outbound -->
+    <div class="rounded-3xl overflow-hidden shadow-xl" style="background:linear-gradient(135deg,#F4845F,#F2C14E)">
+      <div class="px-6 pt-5 pb-3 flex justify-between items-start">
+        <div>
+          <div class="text-white/70 text-[10px] font-bold tracking-widest uppercase">OUTBOUND · 去程</div>
+          <div class="text-white text-xl font-bold mt-1">🛫 5月10日（日）</div>
+        </div>
+        <div class="bg-white/25 rounded-xl px-3 py-1.5 text-right">
+          <div class="text-white text-xs font-bold">🇹🇼 中華航空</div>
+          <div class="text-white/70 text-[10px]">CHINA AIRLINES</div>
+        </div>
+      </div>
+      <div class="px-6 pb-4 flex items-center justify-between">
+        <div>
+          <div class="text-white text-3xl font-bold">07:55</div>
+          <div class="text-white/85 font-bold">TPE</div>
+          <div class="text-white/60 text-xs mt-0.5">桃園第1航站</div>
+        </div>
+        <div class="flex-1 mx-4 text-center">
+          <div class="text-white/80 text-xs mb-1">CI 188</div>
+          <div class="relative"><div class="border-t-2 border-dashed border-white/40"></div><div class="absolute right-0 top-1/2 -translate-y-1/2 text-white text-lg">✈</div></div>
+          <div class="text-white/60 text-xs mt-1">3h 20m</div>
+        </div>
+        <div class="text-right">
+          <div class="text-white text-3xl font-bold">11:15</div>
+          <div class="text-white/85 font-bold">PUS</div>
+          <div class="text-white/60 text-xs mt-0.5">金海國際機場</div>
+        </div>
+      </div>
+      <div class="ticket-perf mx-3"><div class="ticket-hole"></div><div class="ticket-dash"></div><div class="ticket-hole"></div></div>
+      <div class="bg-black/10 px-6 py-4">
+        <div class="flex justify-around text-center">
+          <div><div class="text-white/60 text-[10px] font-bold uppercase">日期</div><div class="text-white text-sm font-bold">5/10 日</div></div>
+          <div><div class="text-white/60 text-[10px] font-bold uppercase">航班</div><div class="text-white text-sm font-bold">CI 188</div></div>
+          <div><div class="text-white/60 text-[10px] font-bold uppercase">集合</div><div class="text-white text-sm font-bold">05:30</div></div>
+          <div><div class="text-white/60 text-[10px] font-bold uppercase">地點</div><div class="text-white text-xs font-bold">華航櫃台</div></div>
+        </div>
+        <div class="mt-3 bg-white/10 rounded-xl px-3 py-2 text-center text-white/80 text-xs">
+          📣 集合時間：05:30–05:55 華航報到櫃台 第1航站
+        </div>
+      </div>
+    </div>
+
+    <!-- Return -->
+    <div class="rounded-3xl overflow-hidden shadow-xl" style="background:linear-gradient(135deg,#7C3AED,#5B21B6)">
+      <div class="px-6 pt-5 pb-3 flex justify-between items-start">
+        <div>
+          <div class="text-white/70 text-[10px] font-bold tracking-widest uppercase">RETURN · 回程</div>
+          <div class="text-white text-xl font-bold mt-1">🛬 5月14日（四）</div>
+        </div>
+        <div class="bg-white/25 rounded-xl px-3 py-1.5 text-right">
+          <div class="text-white text-xs font-bold">🇹🇼 中華航空</div>
+          <div class="text-white/70 text-[10px]">CHINA AIRLINES</div>
+        </div>
+      </div>
+      <div class="px-6 pb-4 flex items-center justify-between">
+        <div>
+          <div class="text-white text-3xl font-bold">19:50</div>
+          <div class="text-white/85 font-bold">PUS</div>
+          <div class="text-white/60 text-xs mt-0.5">金海國際機場</div>
+        </div>
+        <div class="flex-1 mx-4 text-center">
+          <div class="text-white/80 text-xs mb-1">CI 187</div>
+          <div class="relative"><div class="border-t-2 border-dashed border-white/40"></div><div class="absolute right-0 top-1/2 -translate-y-1/2 text-white text-lg">✈</div></div>
+          <div class="text-white/60 text-xs mt-1">1h 40m</div>
+        </div>
+        <div class="text-right">
+          <div class="text-white text-3xl font-bold">21:30</div>
+          <div class="text-white/85 font-bold">TPE</div>
+          <div class="text-white/60 text-xs mt-0.5">桃園第1航站</div>
+        </div>
+      </div>
+      <div class="ticket-perf mx-3"><div class="ticket-hole" style="background:#FFF8EE"></div><div class="ticket-dash"></div><div class="ticket-hole" style="background:#FFF8EE"></div></div>
+      <div class="bg-black/10 px-6 py-4 flex justify-around text-center">
+        <div><div class="text-white/60 text-[10px] font-bold uppercase">日期</div><div class="text-white text-sm font-bold">5/14 四</div></div>
+        <div><div class="text-white/60 text-[10px] font-bold uppercase">航班</div><div class="text-white text-sm font-bold">CI 187</div></div>
+        <div><div class="text-white/60 text-[10px] font-bold uppercase">起飛</div><div class="text-white text-sm font-bold">19:50</div></div>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-700 space-y-1">
+      <div class="font-bold mb-1">✈️ 機場小提醒</div>
+      <div>• 桃園機場<strong>第1航站</strong>，請勿走錯！</div>
+      <div>• 護照有效期需 6 個月以上</div>
+      <div>• 行動電源<strong>禁止託運</strong>，需隨身手提</div>
+      <div>• 暖暖包（2026新規）也需手提，不可託運</div>
+      <div>• 金海機場→市區可搭利木津巴士（약60분）</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 每日行程                   -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='schedule'" class="pt-3 pb-10">
+
+    <div class="sticky-note mx-4 mb-3 rounded-xl p-3">
+      <div class="text-xs font-bold text-amber-700">📌 攻略來自Yang記事本整理，超級感謝😍</div>
+    </div>
+
+    <!-- Toggle -->
+    <div class="mx-4 mb-3 flex gap-2">
+      <button @click="showOverview=true" :class="['flex-1 py-2 rounded-xl text-sm font-bold transition-all', showOverview?'bg-orange text-white shadow':'bg-white text-brown-lt border border-orange-200']">🗺 總覽地圖</button>
+      <button @click="showOverview=false" :class="['flex-1 py-2 rounded-xl text-sm font-bold transition-all', !showOverview?'bg-orange text-white shadow':'bg-white text-brown-lt border border-orange-200']">📅 每日行程</button>
+    </div>
+
+    <!-- Overview Map -->
+    <div v-show="showOverview" class="px-4 mb-4">
+      <div id="overview-map" class="map-wrap w-full" style="height:380px"></div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <div v-for="(d,i) in days" :key="i" class="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 shadow-sm">
+          <div class="w-3 h-3 rounded-full" :style="{background:dayColors[i]}"></div>
+          <span class="text-xs font-bold text-brown">{{d.dateStr}} {{d.title}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily View -->
+    <div v-show="!showOverview">
+      <!-- Date Selector -->
+      <div class="flex overflow-x-auto no-scrollbar gap-2 px-4 pb-3">
+        <button v-for="(d,i) in days" :key="i" @click="selectedDay=i"
+          :class="['flex-shrink-0 flex flex-col items-center px-4 py-2.5 rounded-2xl transition-all border',
+            selectedDay===i ? 'bg-orange text-white border-orange shadow-md scale-105' : 'bg-white text-brown border-orange-100']">
+          <span class="text-[10px] font-bold opacity-70">{{d.dateStr.replace(/[日一二三四五六]/,'')}}</span>
+          <span class="text-base font-bold leading-snug">{{d.dateStr.match(/[日一二三四]/)?.[0]}}</span>
+          <span class="text-[10px]">{{d.dateStr.split('/')[0]}}/{{d.dateStr.replace(/[日一二三四]/,'').split('/')[1]}}</span>
+        </button>
+      </div>
+
+      <div class="px-4">
+        <div class="text-lg font-serif font-bold text-brown mb-0.5">{{days[selectedDay].emoji}} {{days[selectedDay].dateStr}} {{days[selectedDay].title}}</div>
+        <div class="text-xs text-brown-lt mb-3">📍 {{days[selectedDay].city}}</div>
+
+        <!-- Weather -->
+        <div class="mb-3 rounded-2xl p-3 border" style="background:linear-gradient(to right,#e0f2fe,#f0f9ff);border-color:#bae6fd">
+          <div v-if="getWeather(selectedDay)" class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-3xl">{{weatherEmoji(getWeather(selectedDay).code)}}</span>
+              <div>
+                <div class="text-sm font-bold text-sky-700">{{weatherDesc(getWeather(selectedDay).code)}}</div>
+                <div class="text-xs text-sky-500">{{days[selectedDay].city}}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xl font-bold text-sky-700">{{getWeather(selectedDay).max}}°C</div>
+              <div class="text-xs text-sky-500">最低 {{getWeather(selectedDay).min}}°C</div>
+            </div>
+          </div>
+          <div v-else class="text-center text-sky-400 text-sm animate-pulse py-1">🌤 載入天氣中...</div>
+        </div>
+
+        <!-- Day Map -->
+        <div :id="'dm-'+selectedDay" class="map-wrap w-full mb-3" style="height:200px"></div>
+
+        <!-- Location Cards -->
+        <div class="space-y-3">
+          <div v-for="item in days[selectedDay].locations" :key="item.id" class="bg-white rounded-2xl p-4 shadow-sm border border-orange-50">
+            <div class="flex items-start gap-2 mb-2">
+              <span class="text-2xl flex-shrink-0">{{item.emoji}}</span>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-brown text-sm leading-tight">{{item.name}}</div>
+                <div class="text-xs text-brown-lt">{{item.nameKo}}</div>
+              </div>
+              <span :class="['badge','badge-'+item.type,'flex-shrink-0']">{{typeLabel(item.type)}}</span>
+              <button @click="openEdit(selectedDay,item)" class="text-brown-lt hover:text-orange ml-1 text-sm">✏️</button>
+              <button @click="delItem(selectedDay,item.id)" class="text-brown-lt hover:text-red-400 text-sm">🗑</button>
+            </div>
+            <div v-if="item.subtitle" class="text-xs text-brown-lt bg-orange-50 rounded-lg px-2 py-1 mb-2">{{item.subtitle}}</div>
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <a v-if="item.googleMapsUrl" :href="item.googleMapsUrl" target="_blank" class="text-[10px] font-bold bg-green-50 border border-green-200 text-green-700 rounded-full px-2 py-1">🗺 Google</a>
+              <a v-if="item.naverMapsUrl"  :href="item.naverMapsUrl"  target="_blank" class="text-[10px] font-bold bg-green-50 border border-green-200 text-green-700 rounded-full px-2 py-1">🧭 Naver</a>
+              <a v-if="item.guideUrl"      :href="item.guideUrl"      target="_blank" class="text-[10px] font-bold bg-orange-50 border border-orange-200 text-orange rounded-full px-2 py-1">📖 攻略</a>
+            </div>
+            <div v-if="item.story">
+              <button @click="item._open=!item._open" class="text-[10px] text-brown-lt flex items-center gap-1 mb-1">
+                💡 景點故事 & 攻略 <span>{{item._open?'▲':'▼'}}</span>
+              </button>
+              <div v-show="item._open" class="text-xs text-brown bg-amber-50 rounded-xl p-3 leading-relaxed border border-amber-100">{{item.story}}</div>
+            </div>
+            <input v-model="item.notes" @input="saveNotes" placeholder="📝 備註..." class="mt-2 w-full text-xs bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-brown placeholder-gray-300 focus:outline-none focus:border-orange-300">
+          </div>
+
+          <!-- Hotel -->
+          <div v-if="days[selectedDay].hotel" class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🛌</span>
+              <div>
+                <div class="font-bold text-amber-700 text-sm">{{days[selectedDay].hotel.name}}</div>
+                <span class="badge" style="background:#FFF8E0;color:#F39C12;border:1px solid #F9E3A5">住宿</span>
+              </div>
+            </div>
+            <div class="text-xs text-amber-600 mb-1">📍 {{days[selectedDay].hotel.addr}}</div>
+            <div class="text-xs text-amber-600 mb-3">📞 {{days[selectedDay].hotel.phone}}</div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-amber-700 flex-shrink-0">🔑 房號：</span>
+              <input v-model="hotelRooms[selectedDay]" @input="saveRooms" placeholder="輸入房間號碼"
+                class="flex-1 text-sm bg-white border border-amber-200 rounded-xl px-3 py-1.5 text-amber-700 placeholder-amber-300 focus:outline-none">
+            </div>
+          </div>
+
+          <button @click="openAdd(selectedDay)" class="w-full py-3 border-2 border-dashed border-orange-300 rounded-2xl text-orange text-sm font-bold flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors">
+            ＋ 新增地點
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 匯率                       -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='currency'" class="px-4 pt-5 pb-10 space-y-4">
+    <div class="text-center"><h2 class="text-xl font-serif font-bold text-brown">匯率小幫手 💰</h2><p class="text-xs text-brown-lt mt-1">台幣 ⇄ 韓元</p></div>
+
+    <div class="bg-white border-2 border-amber-300 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-pink-500 mb-3">💱 匯率設定</div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-brown font-bold whitespace-nowrap">今日匯率 (1台幣=)</span>
+        <div class="flex-1 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+          <input v-model.number="rate" type="number" min="1" class="flex-1 text-lg font-bold text-brown bg-transparent focus:outline-none w-16 text-center">
+          <span class="text-orange font-bold text-sm">₩</span>
+        </div>
+      </div>
+      <p class="text-xs text-brown-lt mt-2 text-center">💡 建議參考當日銀行匯率（通常約40-43）</p>
+    </div>
+
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-blue-600 mb-3">💸 快速換算（韓幣→台幣）</div>
+      <div class="bg-white rounded-xl px-4 py-3 border border-blue-100 mb-3 flex items-center gap-2">
+        <span class="text-orange font-bold text-lg">₩</span>
+        <input v-model="krw" type="number" placeholder="輸入韓幣金額" class="flex-1 text-xl font-bold text-brown bg-transparent focus:outline-none placeholder-gray-300">
+      </div>
+      <div class="text-center bg-white rounded-xl px-4 py-3 border border-blue-100">
+        <div class="text-xs text-blue-400 mb-1">≈</div>
+        <div class="text-3xl font-bold text-blue-600">{{krwCalc}} <span class="text-base">NT$</span></div>
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-brown mb-3">📊 價格對照表</div>
+      <div class="border-t-2 border-dashed border-gray-200 mb-3"></div>
+      <div class="space-y-2">
+        <div v-for="r in priceRows" :key="r.k" class="flex justify-between items-center py-1.5 border-b border-gray-50">
+          <span class="font-bold text-brown text-sm">₩ {{r.k.toLocaleString()}}</span>
+          <span class="font-bold text-blue-500 text-sm">NT$ {{r.t.toLocaleString()}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 韓文                       -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='korean'" class="px-4 pt-5 pb-10 space-y-4">
+    <div class="text-center"><h2 class="text-xl font-serif font-bold text-brown">韓文教室 👄</h2><p class="text-xs text-brown-lt mt-1">隨身翻譯機 + 超直覺發音</p></div>
+
+    <div class="bg-white border border-orange-100 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-brown mb-3">🔤 隨身翻譯機</div>
+      <textarea v-model="tInput" rows="3" placeholder="輸入中文或英文..." class="w-full text-sm bg-orange-50 border border-orange-100 rounded-xl px-3 py-2.5 text-brown placeholder-brown-lt focus:outline-none resize-none mb-2"></textarea>
+      <button @click="doTranslate" :disabled="translating" class="w-full py-2.5 bg-orange text-white font-bold rounded-xl text-sm mb-2 disabled:opacity-60 active:scale-95 transition-all">
+        {{translating?'翻譯中...':'翻譯成韓文 🔤'}}
+      </button>
+      <div v-if="tResult" class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-2">
+        <div class="text-[10px] text-blue-400 font-bold mb-1">한국어</div>
+        <div class="text-base font-bold text-blue-700">{{tResult}}</div>
+      </div>
+      <div class="flex gap-2">
+        <a :href="'https://translate.google.com/?sl=zh-TW&tl=ko&text='+encodeURIComponent(tInput)" target="_blank" class="flex-1 py-2 bg-green-50 border border-green-200 text-green-700 font-bold text-xs rounded-xl text-center">🌐 Google翻譯</a>
+        <a :href="'https://papago.naver.com/?sk=zh-CN&tk=ko&st='+encodeURIComponent(tInput)" target="_blank" class="flex-1 py-2 bg-green-50 border border-green-200 text-green-700 font-bold text-xs rounded-xl text-center">🐦 Papago</a>
+      </div>
+    </div>
+
+    <div v-for="(sec,si) in phrases" :key="si" class="bg-white border border-orange-100 rounded-2xl overflow-hidden shadow-sm">
+      <button @click="sec._open=!sec._open" class="w-full flex items-center justify-between p-4 text-left">
+        <div class="font-bold text-brown text-sm">{{sec.title}}</div>
+        <span class="text-brown-lt text-sm">{{sec._open?'▲':'▼'}}</span>
+      </button>
+      <div v-show="sec._open" class="border-t border-orange-50">
+        <div v-for="(p,pi) in sec.list" :key="pi" class="flex items-center py-2.5 px-4 border-b border-gray-50 last:border-0">
+          <div class="flex-1">
+            <div class="text-sm font-bold text-brown">{{p.zh}}</div>
+            <div class="text-xs text-blue-500 font-bold mt-0.5">{{p.ko}}</div>
+          </div>
+          <div class="ml-3 bg-orange-50 border border-orange-100 rounded-lg px-2 py-1 text-xs font-bold text-orange">{{p.ph}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 資訊                       -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='info'" class="px-4 pt-5 pb-10 space-y-4">
+    <div class="text-center"><h2 class="text-xl font-serif font-bold text-brown">資訊參考 📝</h2></div>
+
+    <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
+      <div class="text-sm font-bold text-red-600 mb-3">🚫 行李禁運注意事項</div>
+      <div class="space-y-3">
+        <div class="bg-white rounded-xl p-3 border border-red-100">
+          <div class="text-xs font-bold text-red-500 mb-2">❌ 這些絕對不能帶！</div>
+          <div class="text-xs text-gray-700 space-y-1">
+            <div>🥩 肉類製品：香腸、肉乾、肉鬆蛋捲、含肉塊泡麵</div>
+            <div>💇 電池不可拆的離子夾/捲髮棒（手提託運都不行）</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-3 border border-red-100">
+          <div class="text-xs font-bold text-red-500 mb-2">❌ 韓國嚴格禁止/列管藥品</div>
+          <div class="text-xs text-gray-700 space-y-1">
+            <div>1. 止咳/止痛：含「去氫可待因」「右美沙芬」</div>
+            <div>2. 日本EVE中的「丙烯異丙乙酸尿」成分</div>
+            <div>3. 精神科/安眠藥：甲基苯丙胺鹽酸鹽、佐匹克隆</div>
+            <div>4. 褪黑激素、乙醯半胱氨酸</div>
+            <div class="text-red-600 font-bold">5. ⚠️ 含鴉片/嗎啡的黑色止咳藥水→可能被視為毒品逮捕！</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-3 border border-amber-100">
+          <div class="text-xs font-bold text-amber-600 mb-2">🎒 行李新規定</div>
+          <div class="text-xs text-gray-700 space-y-1">
+            <div>🔥 <b>暖暖包</b>：2026新規！禁止託運，要隨身手提</div>
+            <div>🔋 <b>行動電源</b>：禁止託運，限手提，飛行中不可使用</div>
+            <div>🔌 <b>轉接頭</b>：韓國是4.8mm圓型兩孔（220V）</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-3 border border-green-100">
+          <div class="text-xs font-bold text-green-600 mb-2">💼 海關申報額度</div>
+          <div class="text-xs text-gray-700 space-y-1">
+            <div>🍾 酒類：1公升以內（限1瓶），$400美元以下</div>
+            <div>🚬 香菸：200支以內</div>
+            <div>💵 現金：超過$10,000美元需申報</div>
+            <div class="text-green-600">💡 攜帶慢性病藥物建議附醫師處方箋</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-brown mb-3">📞 緊急聯絡方式</div>
+      <div class="space-y-2">
+        <div v-for="ec in emergency" :key="ec.n" class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">{{ec.e}}</span>
+            <div>
+              <div class="text-xs font-bold text-brown">{{ec.name}}</div>
+              <div class="text-[10px] text-brown-lt">{{ec.desc}}</div>
+            </div>
+          </div>
+          <a :href="'tel:'+ec.n" class="bg-orange text-white text-sm font-bold px-3 py-1.5 rounded-xl">{{ec.n}}</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-purple-700 mb-3">🛍️ 購物小攻略</div>
+      <div class="text-xs text-gray-700 space-y-2">
+        <div class="flex gap-2"><span>💊</span><span><b>Olive Young</b>：韓國最大藥妝連鎖，護膚/彩妝必逛</span></div>
+        <div class="flex gap-2"><span>🏪</span><span><b>Daiso</b>：生活雜貨，韓風小物超豐富</span></div>
+        <div class="flex gap-2"><span>👟</span><span><b>ABC-Mart</b>：運動鞋比台灣優惠</span></div>
+        <div class="flex gap-2"><span>🧾</span><span>退稅門檻：<b>3萬韓元</b>，保留收據！</span></div>
+        <div class="flex gap-2"><span>💳</span><span>大部分商家可刷卡，傳統市場帶現金</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- TAB: 行李清單                   -->
+  <!-- ══════════════════════════════ -->
+  <div v-show="activeTab==='checklist'" class="px-4 pt-5 pb-10 space-y-4">
+    <div class="text-center"><h2 class="text-xl font-serif font-bold text-brown">行李清單 🎒</h2></div>
+
+    <div class="bg-white border border-orange-100 rounded-2xl p-4 shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-bold text-brown">準備進度</span>
+        <span class="text-sm font-bold text-orange">{{clProg.done}} / {{clProg.total}}</span>
+      </div>
+      <div class="bg-orange-100 rounded-full h-4 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-500" style="background:linear-gradient(to right,#F4845F,#F2C14E)" :style="{width:clProg.pct+'%'}"></div>
+      </div>
+      <div class="text-xs text-brown-lt text-center mt-2">{{clProg.pct>=100?'🎉 行李打包完成！出發囉！':clProg.pct+'% 完成'}}</div>
+    </div>
+
+    <div v-for="grp in clGroups" :key="grp.name" class="bg-white border border-orange-50 rounded-2xl overflow-hidden shadow-sm">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-orange-50">
+        <span class="text-sm font-bold text-brown">{{grp.name}}</span>
+        <span class="text-xs text-brown-lt">{{clDone(grp.name)}} / {{clItems(grp.name).length}}</span>
+      </div>
+      <div v-if="grp.warn" class="bg-red-50 px-4 py-2 border-b border-red-100">
+        <div class="text-xs text-red-500 font-bold">⚠️ {{grp.warn}}</div>
+      </div>
+      <div class="px-4 py-2">
+        <div v-for="item in clItems(grp.name)" :key="item.id" class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+          <div class="flex items-center gap-3 flex-1 cursor-pointer" @click="toggleCl(item)">
+            <div :class="['chk-box', item.done?'done':'']">
+              <span v-if="item.done" class="text-white text-xs font-bold">✓</span>
+            </div>
+            <span :class="['text-sm', item.done?'line-through text-brown-lt':'text-brown']">{{item.name}}</span>
+          </div>
+          <button @click="delCl(item.id)" class="text-gray-300 hover:text-red-400 text-sm ml-2 p-1">×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white border border-orange-100 rounded-2xl p-4 shadow-sm">
+      <div class="text-sm font-bold text-brown mb-3">＋ 新增項目</div>
+      <input v-model="newCl" placeholder="新增清單項目..." class="input-f mb-2">
+      <div class="flex gap-2">
+        <select v-model="newClGrp" class="input-f flex-1">
+          <option v-for="g in clGroups" :key="g.name" :value="g.name">{{g.name}}</option>
+        </select>
+        <button @click="addCl" class="bg-orange text-white px-4 py-2 rounded-xl text-sm font-bold">新增</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- MODAL: Edit / Add              -->
+  <!-- ══════════════════════════════ -->
+  <div v-if="modal" class="fixed inset-0 z-[9999] flex items-end justify-center">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="modal=false"></div>
+    <div class="relative bg-cream rounded-t-3xl w-full max-w-[480px] p-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif font-bold text-brown text-lg">{{isNew?'新增地點':'編輯地點'}}</h3>
+        <button @click="modal=false" class="text-brown-lt text-xl">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">Emoji</label><input v-model="ef.emoji" class="input-f"></div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">名稱</label><input v-model="ef.name" class="input-f" placeholder="景點/餐廳名稱"></div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">韓文名</label><input v-model="ef.nameKo" class="input-f" placeholder="한국어 이름"></div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">類型</label>
+          <select v-model="ef.type" class="input-f">
+            <option value="attraction">🏛 景點</option>
+            <option value="lunch">🥣 午餐</option>
+            <option value="dinner">🥘 晚餐</option>
+            <option value="snack">🍗 宵夜/點心</option>
+          </select>
+        </div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">說明</label><input v-model="ef.subtitle" class="input-f"></div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">攻略連結</label><input v-model="ef.guideUrl" class="input-f" placeholder="https://..."></div>
+        <div><label class="text-xs font-bold text-brown-lt mb-1 block">備註</label><textarea v-model="ef.notes" rows="3" class="input-f resize-none"></textarea></div>
+        <div class="flex gap-3 pt-2">
+          <button @click="modal=false" class="flex-1 py-3 border border-orange-200 text-brown-lt rounded-2xl font-bold">取消</button>
+          <button @click="saveItem" class="flex-1 py-3 bg-orange text-white rounded-2xl font-bold">儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    const defaultCl = [
+      {id:'c1',grp:'重要文件 📋',name:'護照',done:false},
+      {id:'c2',grp:'重要文件 📋',name:'信用卡',done:false},
+      {id:'c3',grp:'重要文件 📋',name:'現金（台幣/韓元）',done:false},
+      {id:'c4',grp:'重要文件 📋',name:'身份證件',done:false},
+      {id:'c5',grp:'電子產品 🔌',name:'手機',done:false},
+      {id:'c6',grp:'電子產品 🔌',name:'充電線',done:false},
+      {id:'c7',grp:'電子產品 🔌',name:'行動電源（手提！禁託運）',done:false},
+      {id:'c8',grp:'電子產品 🔌',name:'轉接頭（圓型雙孔220V）',done:false},
+      {id:'c9',grp:'衣物 👕',name:'上衣',done:false},
+      {id:'c10',grp:'衣物 👕',name:'褲子',done:false},
+      {id:'c11',grp:'衣物 👕',name:'貼身衣物',done:false},
+      {id:'c12',grp:'衣物 👕',name:'襪子',done:false},
+      {id:'c13',grp:'衣物 👕',name:'外套',done:false},
+      {id:'c14',grp:'衣物 👕',name:'鞋子',done:false},
+      {id:'c15',grp:'盥洗用品 🧴',name:'牙刷',done:false},
+      {id:'c16',grp:'盥洗用品 🧴',name:'牙膏',done:false},
+      {id:'c17',grp:'盥洗用品 🧴',name:'洗面乳',done:false},
+      {id:'c18',grp:'盥洗用品 🧴',name:'洗髮精/護髮乳',done:false},
+      {id:'c19',grp:'盥洗用品 🧴',name:'沐浴乳',done:false},
+      {id:'c20',grp:'盥洗用品 🧴',name:'保養品',done:false},
+      {id:'c21',grp:'藥品 💊',name:'處方籤（含說明書）',done:false},
+      {id:'c22',grp:'藥品 💊',name:'常備藥',done:false},
+      {id:'c23',grp:'藥品 💊',name:'防曬乳',done:false},
+      {id:'c24',grp:'藥品 💊',name:'防蚊液',done:false},
+      {id:'c25',grp:'藥品 💊',name:'OK繃',done:false},
+      {id:'c26',grp:'藥品 💊',name:'隨身消毒/口罩',done:false},
+      {id:'c27',grp:'其他 🎒',name:'空水壺/保溫瓶',done:false},
+      {id:'c28',grp:'其他 🎒',name:'雨傘/遮陽傘',done:false},
+      {id:'c29',grp:'其他 🎒',name:'帽子/太陽眼鏡',done:false},
+      {id:'c30',grp:'其他 🎒',name:'購物袋',done:false},
+    ];
+    return {
+      activeTab:'flight',
+      showOverview:false,
+      selectedDay:0,
+      _omaps:{}, _ovmap:null,
+      weather:{busan:null,gyeongju:null},
+      rate:42, krw:'',
+      tInput:'', tResult:'', translating:false,
+      modal:false, isNew:false, ef:{}, editDay:null, editId:null,
+      hotelRooms:{0:'',1:'',2:'',3:'',4:''},
+      checklist:[], newCl:'', newClGrp:'重要文件 📋',
+      dayColors:['#F4845F','#5B9BD5','#88C9A1','#9B59B6','#F2C14E'],
+      tabs:[
+        {id:'flight',label:'✈️ 航班'},
+        {id:'schedule',label:'🗺 行程'},
+        {id:'currency',label:'💰 匯率'},
+        {id:'korean',label:'👄 韓文'},
+        {id:'info',label:'📝 資訊'},
+        {id:'checklist',label:'🎒 行李'},
+      ],
+      emergency:[
+        {e:'🚔',name:'警察局',desc:'報案/犯罪/緊急求助',n:'112'},
+        {e:'🚑',name:'消防/救護車',desc:'火災/急症',n:'119'},
+        {e:'📱',name:'旅遊資訊/翻譯',desc:'24小時，可選中文',n:'1330'},
+        {e:'🏛️',name:'駐釜山辦事處',desc:'台灣人緊急聯絡',n:'010-4537-7961'},
+        {e:'🆘',name:'外交部急難救助',desc:'台灣撥打',n:'0800-085-095'},
+      ],
+      clGroups:[
+        {name:'重要文件 📋',warn:null},
+        {name:'電子產品 🔌',warn:null},
+        {name:'衣物 👕',warn:null},
+        {name:'盥洗用品 🧴',warn:null},
+        {name:'藥品 💊',warn:'大正小黃粉、EVE系列禁止帶入韓國！'},
+        {name:'其他 🎒',warn:null},
+      ],
+      phrases:[
+        {title:'一、萬能禮貌組 🙏',_open:true,list:[
+          {zh:'你好',ko:'안녕하세요',ph:'安妞哈誰優'},
+          {zh:'謝謝',ko:'감사합니다',ph:'康撒哈咪搭'},
+          {zh:'對不起',ko:'죄송합니다',ph:'罪松哈咪搭'},
+          {zh:'借過一下',ko:'잠깐만요',ph:'江吸曼優'},
+          {zh:'打擾一下',ko:'실례합니다',ph:'希咧哈咪搭'},
+          {zh:'沒關係/不用了',ko:'괜찮아요',ph:'寬掐納優'},
+          {zh:'辛苦了',ko:'수고하셨어요',ph:'蘇勾哈謝搜優'},
+        ]},
+        {title:'二、餐廳點餐 🍽️',_open:false,list:[
+          {zh:'這裡！（招喚店員）',ko:'여기요',ph:'唷gi優'},
+          {zh:'請給我菜單',ko:'메뉴판 주세요',ph:'美妞盤啾誰優'},
+          {zh:'請給我這個',ko:'이거 주세요',ph:'以狗啾誰優'},
+          {zh:'不要辣',ko:'안 맵게 해주세요',ph:'安妹給嘿啾誰優'},
+          {zh:'請給我水',ko:'물 한잔 주세요',ph:'母炯啾誰優'},
+          {zh:'真的很好吃',ko:'진짜 맛있어요',ph:'金家罵吸搜優'},
+          {zh:'請給我帳單',ko:'계산서 주세요',ph:'給山搜啾誰優'},
+        ]},
+        {title:'三、變身在地人 🎭',_open:false,list:[
+          {zh:'是的/對啊',ko:'네~',ph:'內~'},
+          {zh:'真的嗎？',ko:'진짜요?',ph:'金家優?'},
+          {zh:'太讚了！',ko:'대박!',ph:'爹霸!'},
+          {zh:'原來如此',ko:'아 그렇군요',ph:'阿酷勒優'},
+          {zh:'天啊',ko:'어머!',ph:'歐某!'},
+          {zh:'沒錯/對呀',ko:'맞아요',ph:'罵掐優'},
+          {zh:'好喔/沒問題',ko:'알겠어요',ph:'阿給搜優'},
+        ]},
+      ],
+      days:[
+        {
+          dateStr:'5/10日',emoji:'🌟',title:'釜山初體驗',city:'Busan',wc:'busan',wi:0,
+          hotel:{name:'Marysol Hotel',addr:'釜山廣域市海雲台區海雲台海邊路263',phone:'+82-51-746-1234'},
+          locations:[
+            {id:'d0l1',type:'attraction',emoji:'🏘️',name:'甘川洞文化村',nameKo:'감천문화마을',subtitle:'釜山馬丘比丘，贈送地圖',lat:35.0976,lng:129.0106,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=감천문화마을+부산',naverMapsUrl:'https://map.naver.com/v5/search/감천문화마을',guideUrl:'https://tsnio.com/gamcheon-culture-village/',story:'釜山版馬丘比丘！原為韓戰難民聚居的山坡地，現搖身一變成為藝術村。彩色房屋順著山勢層疊而上，在制高點可一覽港灣美景。入口有免費地圖。⭐必看：小王子雕像、魚壁畫。必買：明信片、手工陶瓷。',notes:''},
+            {id:'d0l2',type:'lunch',emoji:'🥣',name:'釜山豬肉湯飯',nameKo:'부산돼지국밥',subtitle:'★韓國美食100選★',lat:35.1052,lng:129.0248,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=부산돼지국밥',naverMapsUrl:'https://map.naver.com/v5/search/부산돼지국밥',guideUrl:'',story:'釜山最具代表性的在地美食！豬骨湯長時間熬煮，濃郁不腥。📌必點：돼지국밥+순대(豬血腸)。自行加鹽、大醬調味！',notes:''},
+            {id:'d0l3',type:'dinner',emoji:'🥘',name:'【鳳雛】安東粉絲燉雞',nameKo:'봉추찜닭',subtitle:'★人氣美食★',lat:35.1577,lng:129.1181,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=봉추찜닭+부산',naverMapsUrl:'https://map.naver.com/v5/search/봉추찜닭',guideUrl:'',story:'안동찜닭人氣名店！整雞+粉絲+蔬菜以甜辣醬汁燉煮，粉絲吸滿醬汁是最大享受。📌必點：중份 + 추가면(加粉絲)！',notes:''},
+            {id:'d0l4',type:'snack',emoji:'🍗',name:'宵夜：韓國國民炸雞+飲料',nameKo:'치맥',subtitle:'每房一份，特別贈送',lat:null,lng:null,_open:false,googleMapsUrl:'',naverMapsUrl:'',guideUrl:'',story:'치맥=치킨+맥주，韓國的國民組合！韓式炸雞皮脆汁多。在房間享用是釜山第一夜的完美句點！',notes:''},
+          ]
+        },
+        {
+          dateStr:'5/11一',emoji:'🏛️',title:'古都慶州知性之旅',city:'Gyeongju',wc:'gyeongju',wi:0,
+          hotel:{name:'Marysol Hotel',addr:'釜山廣域市海雲台區海雲台海邊路263',phone:'+82-51-746-1234'},
+          locations:[
+            {id:'d1l1',type:'attraction',emoji:'🏛️',name:'佛國寺',nameKo:'불국사',subtitle:'世界文化遺產、米其林推薦',lat:35.7900,lng:129.3315,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=불국사+경주',naverMapsUrl:'https://map.naver.com/v5/search/불국사',guideUrl:'https://rowing2005.pixnet.net/blog/posts/9577188924',story:'1995年UNESCO世界文化遺產！🌟必看：多寶塔（印在10元硬幣上）、釋迦塔、紫霞門石階。門票：6,000韓元。',notes:''},
+            {id:'d1l2',type:'attraction',emoji:'🪨',name:'石窟庵',nameKo:'석굴암',subtitle:'世界文化遺產',lat:35.7949,lng:129.3467,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=석굴암+경주',naverMapsUrl:'https://map.naver.com/v5/search/석굴암',guideUrl:'https://monpetitvoyage.pixnet.net/blog/posts/15258221319',story:'8世紀新羅人在花崗岩山頂打造的人工石窟！主尊釋迦如來像被譽為東方雕塑的最高傑作。與佛國寺距離約4km，建議搭免費梭車。',notes:''},
+            {id:'d1l3',type:'attraction',emoji:'🏮',name:'慶州校村韓屋村',nameKo:'교촌한옥마을',subtitle:'最美韓屋村',lat:35.8342,lng:129.2127,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=교촌한옥마을+경주',naverMapsUrl:'https://map.naver.com/v5/search/교촌한옥마을',guideUrl:'',story:'保存完整的慶州傳統韓屋聚落！📌必吃：교촌치킨(橋村炸雞)發源地！必買：황남빵(慶州紅豆餅)。',notes:''},
+            {id:'d1l4',type:'attraction',emoji:'🌊',name:'普門觀光園區',nameKo:'보문관광단지',subtitle:'普門湖畔散策+大水車公園',lat:35.8282,lng:129.2738,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=보문관광단지+경주',naverMapsUrl:'https://map.naver.com/v5/search/보문관광단지',guideUrl:'https://blog.udn.com/shine016/132362033',story:'慶州最美湖畔景區！可騎腳踏車或散步環湖，湖邊有巨型水車地標。📌租借兩人腳踏車環湖約1小時，費用約8,000韓元。',notes:''},
+            {id:'d1l5',type:'lunch',emoji:'🦆',name:'【歲寒圖】煙燻南瓜鴨肉+營養飯',nameKo:'세한도',subtitle:'★人氣美食★',lat:35.8352,lng:129.2146,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=세한도+경주',naverMapsUrl:'https://map.naver.com/v5/search/세한도+경주',guideUrl:'https://misoway.com/sehando/',story:'慶州人氣韓定食！以南瓜為主角搭配燻鴨，罕見的組合。套餐包含多種小菜，擺盤精緻。📌必點：세한한상(歲寒定食套餐)最划算。',notes:''},
+            {id:'d1l6',type:'dinner',emoji:'🥩',name:'【明倫進士排骨】炭烤豬肉吃到飽',nameKo:'명륜진사갈비',subtitle:'★人氣美食★',lat:35.8270,lng:129.2190,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=명륜진사갈비+경주',naverMapsUrl:'https://map.naver.com/v5/search/명륜진사갈비',guideUrl:'https://misoway.com/pus-bbq-minglun-jinjin/',story:'平價吃到飽烤肉！米飯飲料隨意補。📌策略：先吃原味再加辣醬，最後包生菜一口吃！',notes:''},
+          ]
+        },
+        {
+          dateStr:'5/12二',emoji:'🌊',title:'絕美海景與高空體驗',city:'Busan',wc:'busan',wi:2,
+          hotel:{name:'LAVALSE HOTEL',addr:'釜山廣域市海雲台區海雲台路296',phone:'+82-51-731-2580'},
+          locations:[
+            {id:'d2l1',type:'attraction',emoji:'🐉',name:'海東龍宮寺',nameKo:'해동용궁사',subtitle:'絕美海景古剎',lat:35.1859,lng:129.2249,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=해동용궁사+부산',naverMapsUrl:'https://map.naver.com/v5/search/해동용궁사',guideUrl:'https://bobbyfun.tw/haedong-yonggung/',story:'韓國唯一建在海邊的寺廟！初建於1376年，12生肖石像沿階梯排列。📌必做：摸石像許願！清晨人少景美。',notes:''},
+            {id:'d2l2',type:'attraction',emoji:'🛍️',name:'樂天 OUTLET',nameKo:'롯데아울렛동부산',subtitle:'購物',lat:35.1547,lng:129.1179,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=롯데아울렛동부산',naverMapsUrl:'https://map.naver.com/v5/search/롯데아울렛동부산',guideUrl:'https://www.hotelclub.com.tw/釜山outlet必買/',story:'東釜山樂天OUTLET！📌必買：MLB、Adidas、Nike折扣最大！美食廣場可俯瞰海雲台海灘。',notes:''},
+            {id:'d2l3',type:'attraction',emoji:'🚂',name:'海雲台海岸列車',nameKo:'해운대해변열차',subtitle:'熱門打卡',lat:35.1588,lng:129.1604,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=해운대해변열차',naverMapsUrl:'https://map.naver.com/v5/search/해운대해변열차',guideUrl:'https://nancyik2001.pixnet.net/blog/posts/8234658290',story:'沿著海雲台海岸行駛的觀光小火車！全程約5km，是韓劇超熱門拍攝地。📌需提前官網預購！單趟3,000韓元。',notes:''},
+            {id:'d2l4',type:'attraction',emoji:'🏙️',name:'釜山 X THE SKY',nameKo:'부산엑스더스카이',subtitle:'360度觀景台、世界最高星巴克',lat:35.1617,lng:129.1588,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=부산엑스더스카이',naverMapsUrl:'https://map.naver.com/v5/search/부산엑스더스카이',guideUrl:'https://tsnio.com/busan-x-the-sky/',story:'LCT大廈360度觀景台，高達411.6m！世界最高星巴克在98F。📌入場費23,000韓元，傍晚日落最美！',notes:''},
+            {id:'d2l5',type:'attraction',emoji:'🧖',name:'CLUB D OASIS',nameKo:'클럽디오아시스',subtitle:'含汗蒸幕+熱療室+足湯步道',lat:35.0978,lng:129.0267,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=클럽디오아시스+부산',naverMapsUrl:'https://map.naver.com/v5/search/클럽디오아시스',guideUrl:'https://tsnio.com/clubd-oasis/',story:'超人氣網紅汗蒸幕！戶外足湯步道可邊泡腳邊看海景。📌館方有提供浴衣，夜晚景色更迷人！',notes:''},
+            {id:'d2l6',type:'lunch',emoji:'🍲',name:'【海雲台名品】蔘雞湯',nameKo:'해운대소문난삼계탕',subtitle:'★人氣美食★',lat:35.1580,lng:129.1601,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=해운대소문난삼계탕',naverMapsUrl:'https://map.naver.com/v5/search/해운대소문난삼계탕',guideUrl:'https://www.bigfang.tw/blog/post/haeundae-somunnan-samgyetang/amp',story:'整隻嫩雞填滿糯米、人蔘、大棗熬煮，湯頭清甜。📌必點：삼계탕+수삼주(人蔘酒)絕配！',notes:''},
+            {id:'d2l7',type:'dinner',emoji:'🐚',name:'【貝殼倉庫】貝類現撈現烤+烤肉吃到飽',nameKo:'조개창고',subtitle:'★人氣美食★',lat:35.1530,lng:129.1440,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=조개창고+부산',naverMapsUrl:'https://map.naver.com/v5/search/조개창고',guideUrl:'https://youtu.be/FrKx5q9KhgY',story:'帆立貝、花蛤、生蠔所有貝類都有！📌策略：先點조개모듬(綜合貝類)再點豬肉，最後用蛤蜊湯收尾！',notes:''},
+          ]
+        },
+        {
+          dateStr:'5/13三',emoji:'🚡',title:'港都風情與美食饗宴',city:'Busan',wc:'busan',wi:3,
+          hotel:{name:'LAVALSE HOTEL',addr:'釜山廣域市海雲台區海雲台路296',phone:'+82-51-731-2580'},
+          locations:[
+            {id:'d3l1',type:'attraction',emoji:'🚡',name:'松島海上纜車',nameKo:'송도해상케이블카',subtitle:'水晶車廂往返',lat:35.0757,lng:129.0131,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=송도해상케이블카',naverMapsUrl:'https://map.naver.com/v5/search/송도해상케이블카',guideUrl:'https://youtu.be/FrKx5q9KhgY',story:'全長1.62km的海上纜車！水晶車廂腳底就是大海。📌水晶車廂來回約15,000韓元，建議提早訂票！',notes:''},
+            {id:'d3l2',type:'attraction',emoji:'🌊',name:'影島海女村',nameKo:'영도해녀마을',subtitle:'影島',lat:35.0677,lng:129.0604,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=영도해녀마을',naverMapsUrl:'https://map.naver.com/v5/search/영도해녀마을',guideUrl:'https://tessatravel.tw/yeongdo-haenyeo-village/',story:'保存傳統海女文化的漁村！📌現場可購買新鮮海膽、活鮑魚，價格公道！',notes:''},
+            {id:'d3l3',type:'attraction',emoji:'☕',name:'P.ARK玻璃屋海景咖啡廳',nameKo:'피아크',subtitle:'飲品自理',lat:35.0680,lng:129.0580,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=피아크+영도',naverMapsUrl:'https://map.naver.com/v5/search/피아크영도',guideUrl:'https://www.jsimplelife.com/busan-trip-4/',story:'全玻璃建築面向大海，坐在裡面像漂浮在海上。📌飲品自費約15,000韓元，需預約，下午陽光最美！',notes:''},
+            {id:'d3l4',type:'attraction',emoji:'🏠',name:'白淺灘文化村',nameKo:'흰여울문화마을',subtitle:'電影辯護人拍攝地',lat:35.0704,lng:129.0572,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=흰여울문화마을',naverMapsUrl:'https://map.naver.com/v5/search/흰여울문화마을',guideUrl:'https://tsnio.com/huinnyeoul-culture-village/',story:'韓國電影《辯護人》拍攝地！懸崖邊的小漁村，藍白色調彷彿希臘聖托里尼。可俯視釜山港。',notes:''},
+            {id:'d3l5',type:'attraction',emoji:'🌅',name:'絕影海岸散步路',nameKo:'절영해안산책로',subtitle:'熱門打卡',lat:35.0690,lng:129.0555,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=절영해안산책로',naverMapsUrl:'https://map.naver.com/v5/search/절영해안산책로',guideUrl:'https://niny.tw/hinnyoul/',story:'沿海岸線而建的步行棧道，全程約1.5km，不累又超美。📌最佳時間：黃昏前1小時欣賞夕陽！',notes:''},
+            {id:'d3l6',type:'lunch',emoji:'🫕',name:'【北倉洞嫩豆腐】海鮮豆腐鍋+石鍋飯+煎魚',nameKo:'북창동순두부',subtitle:'★人氣美食★',lat:35.0970,lng:129.0302,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=북창동순두부+부산',naverMapsUrl:'https://map.naver.com/v5/search/북창동순두부',guideUrl:'https://hamilton29.pixnet.net/blog/posts/4045831488',story:'순두부찌개是韓國國民料理！軟嫩豆腐加豐富海鮮在辣湯中滾煮。📌不辣版也很好喝！打入生蛋更鮮甜。',notes:''},
+            {id:'d3l7',type:'dinner',emoji:'🦀',name:'【紅蟹Day】長腳蟹吃到飽+淡菜湯+蟹殼炒飯',nameKo:'홍게데이',subtitle:'★人氣美食★',lat:35.0980,lng:129.0330,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=홍게데이+부산',naverMapsUrl:'https://map.naver.com/v5/search/홍게데이',guideUrl:'https://misoway.com/hongge-day/',story:'紅蟹吃到飽名店！肉質甜美、蟹膏豐富。📌秘訣：蟹殼炒飯要自己炒，加滿蟹膏才夠香！',notes:''},
+          ]
+        },
+        {
+          dateStr:'5/14四',emoji:'🗼',title:'經典地標與完美句點',city:'Busan',wc:'busan',wi:4,
+          hotel:null,
+          locations:[
+            {id:'d4l1',type:'attraction',emoji:'🗼',name:'龍頭山公園+釜山鑽石塔',nameKo:'용두산공원부산타워',subtitle:'含上塔券，釜山地標',lat:35.1006,lng:129.0322,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=용두산공원+부산타워',naverMapsUrl:'https://map.naver.com/v5/search/용두산공원',guideUrl:'https://debbiechien.com/busan-tower/',story:'釜山老城區制高點！釜山塔剛完成翻新，融合傳統韓國建築。📌4,000株鬱金香（春天）、全市最大花鐘。上塔費：12,000韓元。',notes:''},
+            {id:'d4l2',type:'attraction',emoji:'🎪',name:'南浦洞國際市場',nameKo:'남포동국제시장',subtitle:'光復洞時裝街、BIFF廣場，綜藝玩很大拍攝地',lat:35.0978,lng:129.0289,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=남포동+부산',naverMapsUrl:'https://map.naver.com/v5/search/남포동',guideUrl:'https://mimigo.tw/nampo-dong-trips/',story:'釜山最熱鬧的購物商圈！BIFF廣場有明星手印。📌必吃：씨앗호떡(葵花籽煎餅)、어묵(魚板串)！',notes:''},
+            {id:'d4l3',type:'attraction',emoji:'🐟',name:'札嘎其漁人碼頭',nameKo:'자갈치시장',subtitle:'南韓最大魚市場',lat:35.0970,lng:129.0302,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=자갈치시장',naverMapsUrl:'https://map.naver.com/v5/search/자갈치시장',guideUrl:'https://www.bigfang.tw/blog/post/jagalchi-market-busan/amp',story:'韓國最大水產市場！可挑選活魚後請廚師料理（加工費另計）。📌路邊必吃：튀김(蔬菜炸物)！',notes:''},
+            {id:'d4l4',type:'lunch',emoji:'🥩',name:'【Plus Meat】烤肉無限放題',nameKo:'플러스미트',subtitle:'★人氣美食★',lat:35.1000,lng:129.0300,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=플러스미트+부산',naverMapsUrl:'https://map.naver.com/v5/search/플러스미트+부산',guideUrl:'https://www.facebook.com/groups/korealife168/posts/2458981484459584/',story:'最後一餐吃到飽烤肉！📌策略：先吃牛後吃豬，最後包韓式生菜一口吃，配冷麵收尾！',notes:''},
+          ]
+        },
+      ],
+      _defaultCl: defaultCl,
+    };
+  },
+  computed:{
+    krwCalc(){if(!this.krw)return 0;const n=parseFloat(this.krw);return isNaN(n)?0:Math.round(n/(this.rate||42)).toLocaleString();},
+    priceRows(){const r=this.rate||42;return[1000,5000,10000,30000,50000,100000,200000,500000].map(k=>({k,t:Math.round(k/r)}));},
+    clProg(){const t=this.checklist.length;const d=this.checklist.filter(i=>i.done).length;return{total:t,done:d,pct:t?Math.round(d/t*100):0};},
+  },
+  methods:{
+    /* Weather */
+    async fetchWeather(){
+      try{
+        const[br,gr]=await Promise.all([
+          fetch('https://archive-api.open-meteo.com/v1/archive?latitude=35.1796&longitude=129.0756&start_date=2025-05-10&end_date=2025-05-14&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul'),
+          fetch('https://archive-api.open-meteo.com/v1/archive?latitude=35.8352&longitude=129.2146&start_date=2025-05-11&end_date=2025-05-11&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul'),
+        ]);
+        const bd=await br.json(),gd=await gr.json();
+        this.weather.busan=bd.daily;
+        this.weather.gyeongju=gd.daily;
+      }catch(e){console.warn('weather',e);}
+    },
+    getWeather(i){const d=this.days[i];const s=this.weather[d.wc];if(!s)return null;const wi=d.wi;if(wi>=s.temperature_2m_max.length)return null;return{code:s.weathercode[wi],max:Math.round(s.temperature_2m_max[wi]),min:Math.round(s.temperature_2m_min[wi])};},
+    weatherEmoji(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c<=3)return'⛅';if(c<=48)return'🌫️';if(c<=55)return'🌦️';if(c<=65)return'🌧️';if(c<=75)return'❄️';if(c<=82)return'🌦️';return'⛈️';},
+    weatherDesc(c){if(c===0)return'晴天';if(c<=2)return'多雲時晴';if(c<=3)return'陰天';if(c<=48)return'起霧';if(c<=55)return'毛毛雨';if(c<=65)return'下雨';if(c<=75)return'下雪';if(c<=82)return'陣雨';return'雷暴';},
+    /* Map */
+    mkIcon(color,label){return L.divIcon({className:'',html:`<div style="width:30px;height:30px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:white">${label}</div>`,iconSize:[30,30],iconAnchor:[15,15]});},
+    async initOverviewMap(){
+      await this.$nextTick();
+      const el=document.getElementById('overview-map');if(!el)return;
+      if(this._ovmap){this._ovmap.remove();this._ovmap=null;}
+      const map=L.map('overview-map');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:18}).addTo(map);
+      const all=[];
+      this.days.forEach((day,di)=>{
+        day.locations.forEach((loc,li)=>{
+          if(loc.lat&&loc.lng){
+            const m=L.marker([loc.lat,loc.lng],{icon:this.mkIcon(this.dayColors[di],di+1)}).addTo(map)
+              .bindPopup(`<b>${loc.name}</b><br><small>Day${di+1}・${day.title}</small>${loc.googleMapsUrl?`<br><a href="${loc.googleMapsUrl}" target="_blank" style="color:#F4845F;font-size:11px">🗺 Google Maps</a>`:''}`);
+            all.push(m);
+          }
+        });
+      });
+      if(all.length){map.fitBounds(L.featureGroup(all).getBounds().pad(.15));}
+      if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{L.circleMarker([p.coords.latitude,p.coords.longitude],{radius:8,color:'#4285F4',fillColor:'#4285F4',fillOpacity:.9}).addTo(map).bindPopup('📍 我在這裡');},()=>{});}
+      this._ovmap=map;
+    },
+    async initDayMap(di){
+      await this.$nextTick();
+      const id='dm-'+di;const el=document.getElementById(id);if(!el)return;
+      if(this._omaps[di]){this._omaps[di].remove();}
+      const map=L.map(id,{zoomControl:false});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:18}).addTo(map);
+      const ms=[];
+      this.days[di].locations.forEach((loc,li)=>{
+        if(loc.lat&&loc.lng){
+          const m=L.marker([loc.lat,loc.lng],{icon:this.mkIcon(this.dayColors[di],li+1)}).addTo(map).bindPopup(`<b>${loc.name}</b>`);
+          ms.push(m);
+        }
+      });
+      if(ms.length){map.fitBounds(L.featureGroup(ms).getBounds().pad(.3));}
+      if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{L.circleMarker([p.coords.latitude,p.coords.longitude],{radius:6,color:'#4285F4',fillColor:'#4285F4',fillOpacity:.9}).addTo(map).bindPopup('📍 我在這裡');},()=>{});}
+      this._omaps[di]=map;
+    },
+    /* Translation */
+    async doTranslate(){
+      if(!this.tInput.trim())return;
+      this.translating=true;this.tResult='';
+      try{
+        const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(this.tInput)}&langpair=zh-TW|ko`);
+        const d=await r.json();
+        this.tResult=d.responseData?.translatedText||'翻譯失敗，請用Google翻譯';
+      }catch(e){this.tResult='翻譯失敗，請使用下方連結';}
+      finally{this.translating=false;}
+    },
+    /* Schedule */
+    typeLabel(t){return{attraction:'景點',lunch:'午餐',dinner:'晚餐',snack:'宵夜',hotel:'住宿'}[t]||t;},
+    openEdit(di,item){this.editDay=di;this.editId=item.id;this.isNew=false;this.ef={...item};this.modal=true;},
+    openAdd(di){this.editDay=di;this.editId=null;this.isNew=true;this.ef={id:'n'+Date.now(),emoji:'📍',name:'',nameKo:'',type:'attraction',subtitle:'',guideUrl:'',notes:'',story:'',_open:false,lat:null,lng:null,googleMapsUrl:'',naverMapsUrl:''};this.modal=true;},
+    saveItem(){if(!this.ef.name)return;if(this.isNew){this.days[this.editDay].locations.push({...this.ef});}else{const locs=this.days[this.editDay].locations;const i=locs.findIndex(l=>l.id===this.editId);if(i!==-1)locs[i]={...locs[i],...this.ef};}this.modal=false;},
+    delItem(di,id){if(!confirm('確定刪除？'))return;this.days[di].locations=this.days[di].locations.filter(l=>l.id!==id);},
+    /* Checklist */
+    clItems(g){return this.checklist.filter(i=>i.grp===g);},
+    clDone(g){return this.clItems(g).filter(i=>i.done).length;},
+    toggleCl(item){item.done=!item.done;this.saveCl();},
+    addCl(){if(!this.newCl.trim())return;this.checklist.push({id:'u'+Date.now(),grp:this.newClGrp,name:this.newCl.trim(),done:false});this.newCl='';this.saveCl();},
+    delCl(id){this.checklist=this.checklist.filter(i=>i.id!==id);this.saveCl();},
+    saveCl(){try{localStorage.setItem('busan-cl',JSON.stringify(this.checklist));}catch(e){}},
+    saveNotes(){try{const n={};this.days.forEach(d=>d.locations.forEach(l=>{if(l.notes)n[l.id]=l.notes;}));localStorage.setItem('busan-notes',JSON.stringify(n));}catch(e){}},
+    saveRooms(){try{localStorage.setItem('busan-rooms',JSON.stringify(this.hotelRooms));}catch(e){}},
+    loadStorage(){
+      try{
+        const cl=localStorage.getItem('busan-cl');
+        this.checklist=cl?JSON.parse(cl):[...this._defaultCl];
+        const rm=localStorage.getItem('busan-rooms');
+        if(rm)this.hotelRooms=JSON.parse(rm);
+        const nt=localStorage.getItem('busan-notes');
+        if(nt){const no=JSON.parse(nt);this.days.forEach(d=>d.locations.forEach(l=>{if(no[l.id])l.notes=no[l.id];}));}
+      }catch(e){this.checklist=[...this._defaultCl];}
+    },
+  },
+  watch:{
+    activeTab(v){
+      if(v==='schedule'){
+        this.$nextTick(()=>{
+          if(this.showOverview)this.initOverviewMap();
+          else setTimeout(()=>this.initDayMap(this.selectedDay),100);
+        });
+      }
+    },
+    selectedDay(v){if(this.activeTab==='schedule'&&!this.showOverview){this.$nextTick(()=>setTimeout(()=>this.initDayMap(v),100));}},
+    showOverview(v){this.$nextTick(()=>{if(v)this.initOverviewMap();else setTimeout(()=>this.initDayMap(this.selectedDay),100);});},
+  },
+  mounted(){this.loadStorage();this.fetchWeather();},
+}).mount('#app');
+</script>
+</body>
+</html>
