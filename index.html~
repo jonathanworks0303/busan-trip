@@ -634,7 +634,7 @@ createApp({
         },
         {
           dateStr:'5/11一',emoji:'🏛️',title:'古都慶州知性之旅',city:'Gyeongju',wc:'gyeongju',wi:0,
-          hotel:{name:'Marysol Hotel',addr:'釜山廣域市海雲台區海雲台海邊路263',phone:'+82-51-746-1234'},
+          hotel:{name:'Marysol Hotel',addr:'37 Gunam-ro, Haeundae-gu, Busan, 南韓',phone:'+82 51-741-7777'},
           locations:[
             {id:'d1l1',type:'attraction',emoji:'🏛️',name:'佛國寺',nameKo:'불국사',subtitle:'世界文化遺產、米其林推薦',lat:35.7900,lng:129.3315,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=불국사+경주',naverMapsUrl:'https://map.naver.com/v5/search/불국사',guideUrl:'https://rowing2005.pixnet.net/blog/posts/9577188924',story:'1995年UNESCO世界文化遺產！🌟必看：多寶塔（印在10元硬幣上）、釋迦塔、紫霞門石階。門票：6,000韓元。',notes:''},
             {id:'d1l2',type:'attraction',emoji:'🪨',name:'石窟庵',nameKo:'석굴암',subtitle:'世界文化遺產',lat:35.7949,lng:129.3467,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=석굴암+경주',naverMapsUrl:'https://map.naver.com/v5/search/석굴암',guideUrl:'https://monpetitvoyage.pixnet.net/blog/posts/15258221319',story:'8世紀新羅人在花崗岩山頂打造的人工石窟！主尊釋迦如來像被譽為東方雕塑的最高傑作。與佛國寺距離約4km，建議搭免費梭車。',notes:''},
@@ -646,7 +646,7 @@ createApp({
         },
         {
           dateStr:'5/12二',emoji:'🌊',title:'絕美海景與高空體驗',city:'Busan',wc:'busan',wi:2,
-          hotel:{name:'LAVALSE HOTEL',addr:'釜山廣域市海雲台區海雲台路296',phone:'+82-51-731-2580'},
+          hotel:{name:'LAVALSE HOTEL',addr:'82 Bongnaenaru-ro, Yeongdo-gu, Busan, 南韓',phone:'+82 51-790-1500'},
           locations:[
             {id:'d2l1',type:'attraction',emoji:'🐉',name:'海東龍宮寺',nameKo:'해동용궁사',subtitle:'絕美海景古剎',lat:35.1859,lng:129.2249,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=해동용궁사+부산',naverMapsUrl:'https://map.naver.com/v5/search/해동용궁사',guideUrl:'https://bobbyfun.tw/haedong-yonggung/',story:'韓國唯一建在海邊的寺廟！初建於1376年，12生肖石像沿階梯排列。📌必做：摸石像許願！清晨人少景美。',notes:''},
             {id:'d2l2',type:'attraction',emoji:'🛍️',name:'樂天 OUTLET',nameKo:'롯데아울렛동부산',subtitle:'購物',lat:35.1547,lng:129.1179,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=롯데아울렛동부산',naverMapsUrl:'https://map.naver.com/v5/search/롯데아울렛동부산',guideUrl:'https://www.hotelclub.com.tw/釜山outlet必買/',story:'東釜山樂天OUTLET！📌必買：MLB、Adidas、Nike折扣最大！美食廣場可俯瞰海雲台海灘。',notes:''},
@@ -659,7 +659,7 @@ createApp({
         },
         {
           dateStr:'5/13三',emoji:'🚡',title:'港都風情與美食饗宴',city:'Busan',wc:'busan',wi:3,
-          hotel:{name:'LAVALSE HOTEL',addr:'釜山廣域市海雲台區海雲台路296',phone:'+82-51-731-2580'},
+          hotel:{name:'LAVALSE HOTEL',addr:'82 Bongnaenaru-ro, Yeongdo-gu, Busan, 南韓',phone:'+82 51-790-1500'},
           locations:[
             {id:'d3l1',type:'attraction',emoji:'🚡',name:'松島海上纜車',nameKo:'송도해상케이블카',subtitle:'水晶車廂往返',lat:35.0757,lng:129.0131,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=송도해상케이블카',naverMapsUrl:'https://map.naver.com/v5/search/송도해상케이블카',guideUrl:'https://youtu.be/FrKx5q9KhgY',story:'全長1.62km的海上纜車！水晶車廂腳底就是大海。📌水晶車廂來回約15,000韓元，建議提早訂票！',notes:''},
             {id:'d3l2',type:'attraction',emoji:'🌊',name:'影島海女村',nameKo:'영도해녀마을',subtitle:'影島',lat:35.0677,lng:129.0604,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=영도해녀마을',naverMapsUrl:'https://map.naver.com/v5/search/영도해녀마을',guideUrl:'https://tessatravel.tw/yeongdo-haenyeo-village/',story:'保存傳統海女文化的漁村！📌現場可購買新鮮海膽、活鮑魚，價格公道！',notes:''},
