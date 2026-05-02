@@ -646,7 +646,7 @@ createApp({
         },
         {
           dateStr:'5/12二',emoji:'🌊',title:'絕美海景與高空體驗',city:'Busan',wc:'busan',wi:2,
-          hotel:{name:'LAVALSE HOTEL',addr:'82 Bongnaenaru-ro, Yeongdo-gu, Busan, 南韓',phone:'+82 51-790-1500'},
+          hotel:{name:'LAVALSE HOTEL',addr:'釜山廣域市海雲台區海雲台路296',phone:'+82-51-731-2580'},
           locations:[
             {id:'d2l1',type:'attraction',emoji:'🐉',name:'海東龍宮寺',nameKo:'해동용궁사',subtitle:'絕美海景古剎',lat:35.1859,lng:129.2249,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=해동용궁사+부산',naverMapsUrl:'https://map.naver.com/v5/search/해동용궁사',guideUrl:'https://bobbyfun.tw/haedong-yonggung/',story:'韓國唯一建在海邊的寺廟！初建於1376年，12生肖石像沿階梯排列。📌必做：摸石像許願！清晨人少景美。',notes:''},
             {id:'d2l2',type:'attraction',emoji:'🛍️',name:'樂天 OUTLET',nameKo:'롯데아울렛동부산',subtitle:'購物',lat:35.1547,lng:129.1179,_open:false,googleMapsUrl:'https://www.google.com/maps/search/?api=1&query=롯데아울렛동부산',naverMapsUrl:'https://map.naver.com/v5/search/롯데아울렛동부산',guideUrl:'https://www.hotelclub.com.tw/釜山outlet必買/',story:'東釜山樂天OUTLET！📌必買：MLB、Adidas、Nike折扣最大！美食廣場可俯瞰海雲台海灘。',notes:''},
